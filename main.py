@@ -4,17 +4,6 @@ import argparse
 from datetime import datetime, timedelta
 
 
-# interval map (0, 'A'), (3, 'B'), (5, 'A')
-
-# 0 -> 'A'
-# 1 -> 'A'
-# 2 -> 'A'
-# 3 -> 'B'
-# 4 -> 'B'
-# 5 -> 'A'
-# 6 -> 'A'
-
-
 def parse_timestamp(ts):
     """Parse ISO timestamp to datetime."""
     return datetime.fromisoformat(ts.replace('Z', '+00:00'))
