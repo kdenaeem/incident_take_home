@@ -1,19 +1,31 @@
 #!/usr/bin/env python3
+
 import json
 import argparse
 from datetime import datetime, timedelta
 
 
 def parse_timestamp(ts):
-    """Parse ISO timestamp to datetime."""
+    """
+    Parse ISO timestamp to datetime.
+    """
     return datetime.fromisoformat(ts.replace('Z', '+00:00'))
 
 def format_timestamp(dt):
+    """
+    Convert a datatime object to an ISO formatted string in UTC format.
+    """
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 
 def generate_base_shifts(users, handover_start, interval, from_time, until_time):
+    """
+    Generate the basic rotation schedule without overrides
+    using the inputs above
+    
+    Time complexity : O(N) where N is the number of shifts between from_time and until_time
+    """
     shifts = []
     i = 0  # Always start from first user
     current_start = handover_start
@@ -31,6 +43,10 @@ def generate_base_shifts(users, handover_start, interval, from_time, until_time)
 
 
 def build_entry(entry, from_time, until_time):
+    """"
+    Truncate a shift entry to the query window and format
+    as a dict.
+    """
     start, end, user = entry
     
     start = max(start, from_time)
@@ -45,9 +61,20 @@ def build_entry(entry, from_time, until_time):
     return None
 
 def overlaps(entry_start, entry_end, override_start, override_end):
+    """
+    Check if a base shift and an override overlap
+    
+    Return True if there is any overlap
+
+    """
     return entry_start < override_end and override_start < entry_end
 
 def apply_overrides(base_shifts, overrides):
+    """
+    Apply all override to the base shifts. Splits shift where overrides occur.
+    
+    Time compelxity: O(M * N) where M is number of base shifts and N is number of overrides
+    """
     result = []
     
     for start, end, user in base_shifts:
@@ -87,6 +114,9 @@ def apply_overrides(base_shifts, overrides):
             
 
 def render_schedule(schedule_config, overrides_list, from_time, until_time):
+    """
+    Main function to generate schedule with overrides applied.
+    """
     users = schedule_config['users']
     handover_start = parse_timestamp(schedule_config['handover_start_at'])
     interval = timedelta(days=schedule_config['handover_interval_days'])
@@ -119,12 +149,14 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
+    # Load JSON files
     with open(args.schedule, 'r') as f:
         schedule_config = json.load(f)
         
     with open(args.overrides, 'r') as f:
         overrides_list = json.load(f)
         
+    # Render Schedule
     results = render_schedule(
         schedule_config,
         overrides_list,
@@ -132,4 +164,5 @@ if __name__ == "__main__":
         args.until
     )
 
+    # Finally output as JSON
     print(json.dumps(results, indent=2))
